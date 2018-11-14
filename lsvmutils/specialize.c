@@ -69,11 +69,11 @@ static int _WriteSingleSpecFile(
     result->PayloadData = NULL;
 
     /* MS-LNX13 - ExtractSpecFiles heap corruption ** Verify filename is not incorrectly specified and defined within the given memory. */
-    if( dataCur + entry->FileNameOffset > totalSize )
+    if( (UINTN)(dataCur + entry->FileNameOffset) > totalSize )
     {
         goto CleanupErr;
     }
-    if( dataCur + entry->FilenameOffset + entry->FilenameSize > totalSize )
+    if( (UINTN)(dataCur + entry->FileNameOffset + entry->FileNameSize) > totalSize )
     {
         goto CleanupErr;
     }
@@ -105,11 +105,11 @@ static int _WriteSingleSpecFile(
         goto CleanupErr;
     }
     /* MS-LNX13 - ExtractSpecFiles heap corruption ** Verify that the payload is not incorrectly specified and exists within the given memory. */
-    if( dataCur + entry->FilePayloadOffset > totalSize )
+    if( (UINTN)(dataCur + entry->FilePayloadOffset) > totalSize )
     {
         goto CleanupErr;
     }
-    if( dataCur + entry->FilePayloadOffset + entry->FilePayloadSize )
+    if( (UINTN)(dataCur + entry->FilePayloadOffset + entry->FilePayloadSize) > totalSize )
     {
         goto CleanupErr;
     }
@@ -200,7 +200,7 @@ static int _WriteSpecResults(
             goto Cleanup;
         }
 
-        if (_WriteSingleSpecFile(dataCur, entry, result + i, data + size ) != 0) /* MS-LNX13 - ExtractSpecFiles heap corruption ** data + size is the total memory to not exceed. */
+        if (_WriteSingleSpecFile(dataCur, entry, result + i, (UINTN)(data + size) ) != 0) /* MS-LNX13 - ExtractSpecFiles heap corruption ** data + size is the total memory to not exceed. */
         {
             goto Cleanup;
         }
