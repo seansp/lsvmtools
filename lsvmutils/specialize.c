@@ -54,7 +54,8 @@ static BOOLEAN _Equals(CHAR16* p1, char* p2, UINTN s1, UINTN s2)
 static int _WriteSingleSpecFile(
     const UINT8* dataCur,
     SPECIALIZATION_CLEAR_DATA_FILE_ENTRY* entry,
-    SPECIALIZATION_FILE* result)
+    SPECIALIZATION_FILE* result,
+    UINTN totalSize )
 {
     /* FileNameSize does not have null terminator. */
     UINTN i = 0;
@@ -66,6 +67,18 @@ static int _WriteSingleSpecFile(
 
     result->FileName = NULL;
     result->PayloadData = NULL;
+
+    /* MS-LNX13 - ExtractSpecFiles heap corruption ** Verify filename is not incorrectly specified and defined within the given memory. */
+    if( dataCur + entry->FileNameOffset > totalSize )
+    {
+        goto CleanupErr;
+    }
+    if( dataCur + entry->FilenameOffset + entry->FilenameSize > totalSize )
+    {
+        goto CleanupErr;
+    }
+
+
 
     fileName = (CHAR16*) (dataCur + entry->FileNameOffset);
     fileNameSize = entry->FileNameSize;
@@ -88,6 +101,15 @@ static int _WriteSingleSpecFile(
     resultFileNameSize = fileNameSize / sizeof(CHAR16);
     result->FileName = (char *) Malloc(resultFileNameSize + 1);
     if (result->FileName == NULL)
+    {
+        goto CleanupErr;
+    }
+    /* MS-LNX13 - ExtractSpecFiles heap corruption ** Verify that the payload is not incorrectly specified and exists within the given memory. */
+    if( dataCur + entry->FilePayloadOffset > totalSize )
+    {
+        goto CleanupErr;
+    }
+    if( dataCur + entry->FilePayloadOffset + entry->FilePayloadSize )
     {
         goto CleanupErr;
     }
@@ -153,7 +175,7 @@ static int _WriteSpecResults(
     UINT32 i = 0;
     int rc = -1;
 
-    if (resultSize != hdr->FileCount)
+    if (resultSize != hdr->FileCount)   /* QUESTION: This check may be misleading because resultSize is passed as hdr->FileCount */
     {
         goto Cleanup;
     }
@@ -169,15 +191,16 @@ static int _WriteSpecResults(
             goto Cleanup;
         }
 
+        /* QUESTION: MS-LNX13 - ExtractSpecFiles heap corruption ** Appears already handled but adding some protection in the called function. */
         entry = (SPECIALIZATION_CLEAR_DATA_FILE_ENTRY*) dataCur; 
         if (dataCur + entry->FileNameOffset + entry->FileNameSize > data + size ||
             dataCur + entry->FilePayloadOffset + entry->FilePayloadSize > data + size ||
-            entry->FileNameSize % 2 != 0)
+            entry->FileNameSize % 2 != 0)  /* QUESTION: Unclear on even filenamesizes */
         {
             goto Cleanup;
         }
 
-        if (_WriteSingleSpecFile(dataCur, entry, result + i) != 0)
+        if (_WriteSingleSpecFile(dataCur, entry, result + i, data + size ) != 0) /* MS-LNX13 - ExtractSpecFiles heap corruption ** data + size is the total memory to not exceed. */
         {
             goto Cleanup;
         }
@@ -217,8 +240,19 @@ int ExtractSpecFiles(
 
     /* Now parse the spec files. */
     hdr = (SPECIALIZATION_CLEAR_DATA_HEADER*) data;
+
+    if (sizeof(*hdr) >= size)  /* MS-LNX13 - ExtractSpecFiles heap corruption ** Check to make sure size is within original bounds. */
+    {
+        goto Cleanup;
+    }
+
     data += sizeof(*hdr);
     size -=  sizeof(*hdr);
+
+    if( hdr->FileCount > 1024 ) /* MS-LNX13 - ExtractSpecFiles heap corruption ** Arbritrary limit on the number of specialization files to prevent misuse. */
+    {
+        goto Cleanup;
+    }
 
     resultLocal = (SPECIALIZATION_FILE*) Malloc(hdr->FileCount * sizeof(SPECIALIZATION_FILE));
     if (resultLocal == NULL)
