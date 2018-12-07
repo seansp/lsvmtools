@@ -50,7 +50,7 @@ case "$distro" in
         fi
 
         # Update to install latest packages
-        yum update
+        yum update --releasever=$distro_major_version.$distro_minor_version
 
         repo="yum install -q -y"
         $command deltarpm
