@@ -35,10 +35,10 @@ echo "Configuring for $distro"
 case "$distro" in
     centos|rhel) 
         if (( $distro_major_version < 7 )); then
-            printf "$0: Unsupported RHEL/CentOS version (Need atleast 7.3)\n"
+            printf "$0: Unsupported RHEL/CentOS version (Need at least 7.3)\n"
             exit 1
         elif (( $distro_major_version == 7 && $distro_minor_version < 3 )); then
-            printf "$0: Unsupported RHEL/CentOS version (Need atleast 7.3)\n"
+            printf "$0: Unsupported RHEL/CentOS version (Need at least 7.3)\n"
             exit 1
         fi
 
@@ -50,8 +50,8 @@ case "$distro" in
         fi
 
         # Update to install latest packages
-	yum update
-	
+        yum update
+
         repo="yum install -q -y"
         $command deltarpm
         $command make
@@ -65,8 +65,9 @@ case "$distro" in
         $command glibc-static
         $command wget
         $command perl
-	$command git
-	$command libxml2-devel
+        $command git
+        $command libxml2-devel
+        $command bzip2
 
         # Not found by yum
         wget https://www.samba.org/ftp/ccache/ccache-3.3.1.tar.gz
@@ -92,7 +93,7 @@ case "$distro" in
         $command ccache
         $command libgcrypt11-dev
         $command bc
-	$command libxml2-dev
+        $command libxml2-dev
         ;;
     sles)
         if (( $distro_major_version < 12 )); then
@@ -102,15 +103,15 @@ case "$distro" in
             printf "$0: Unsupported SLES version (Need atleast 12-SP2)\n"
             exit 1       
         fi
-	
-	# Update to install latest packages
-	zypper update
+
+    # Update to install latest packages
+    zypper update
 
         repo="zypper --non-interactive install" 
 
         # Found by the main repo
         $command git-core
-	$command make
+        $command make
         $command gcc
         $command openssl
         $command libopenssl-devel
@@ -119,8 +120,8 @@ case "$distro" in
 
         # Found by opensuse
         zypper ar http://download.opensuse.org/tumbleweed/repo/oss/suse/ opensuse
-	zypper in gnu-efi
-	zypper in ccache
+        zypper in gnu-efi
+        zypper in ccache
         ;;
      *)
         echo "$0: Unsupported distro. Only supports Ubuntu, RHEL, CentOS and SUSE"
