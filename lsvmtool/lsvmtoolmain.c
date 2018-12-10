@@ -159,16 +159,28 @@ static BOOLEAN _IsTPMPresent()
     TPM_RC rc;
 
     if (!(protocol = TCG2_GetProtocol()))
-	return FALSE;
+    {
+        fprintf( stderr, "#TCG2_GetProtocol FAILED." );
+    	return FALSE;
+    }
 
     if (TCG2_GetCapability(protocol, &capability) != EFI_SUCCESS)
-        return FALSE;
+    {
+        fprintf( stderr, "#TCG2_GetCapability FAILED." );
+    	return FALSE;
+    }
 
     if (capability.TPMPresentFlag != TRUE)
-	return FALSE;
+    {
+        fprintf( stderr, "#TPMPresentFlag FAILED." );
+    	return FALSE;
+    }
 
     if ((rc = TPM2X_SetDictionaryAttackLockReset(protocol)) != TPM_RC_SUCCESS)
-	return FALSE;
+    {
+        fprintf( stderr, "#TPM2X_SetDictionaryAttackLockReset FAILED." );
+    	return FALSE;
+    }
 
     return TRUE;
 }
