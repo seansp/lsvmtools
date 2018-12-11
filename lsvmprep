@@ -277,9 +277,6 @@ esac
 if [ ! -x "${shim}" ]; then
     echo "$0: shim not found"
     exit 1
-else
-    echo "$0: shim found."
-    exit 1
 fi
 
 ##==============================================================================
